@@ -16,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Check if user exists in the database already.
-  const existingUser = User.findOne({
+  const existingUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -29,7 +29,15 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // collecting the file paths from multer.
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.file.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar image is required!");
@@ -46,13 +54,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // Create a user obj and inserting to DB.
   const user = await User.create({
-    username,
+    username: username.toLowerCase(),
     email,
     fullName,
     avatar: avatarUrl.url,
     coverImage: coverImageUrl?.url || "",
     password,
-    refreshToken,
   });
 
   const createdUser = await User.findById(user._id).select(
