@@ -1,9 +1,15 @@
 import { Router } from "express";
-import registerUser from "../controllers/user.controller.js";
+import {
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJwtToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+/***************************** REGISTER ROUTE ****************************/
 router.route("/register").post(
   // using middleware to handle files
   upload.fields([
@@ -19,5 +25,12 @@ router.route("/register").post(
   // Controller call
   registerUser
 );
+
+/***************************** LOGIN ROUTE ****************************/
+router.route("/login").post(loginUser);
+
+// Secured Routes
+/***************************** LOGOUT ROUTE ****************************/
+router.route("/logout").post(verifyJwtToken, logoutUser);
 
 export default router;
