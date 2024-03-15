@@ -149,8 +149,10 @@ const loginUser = asyncHandler(async (req, res) => {
 /***************************** LOGING OUT THE USER ****************************/
 
 const logoutUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  // Remove the tokens from the database
   await User.findByIdAndUpdate(
-    req.user._id,
+    userId,
     {
       $set: { refreshToken: undefined },
     },

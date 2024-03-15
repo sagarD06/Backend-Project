@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import { asyncHandler } from "../utilities/asyncHandler";
-import { ApiError } from "../utilities/ApiErrors";
-import { User } from "../models/user.models";
+import { asyncHandler } from "../utilities/asyncHandler.js";
+import { ApiError } from "../utilities/ApiErrors.js";
+import { User } from "../models/user.models.js";
 
 
 /***************************** CHECKING AND VERIYING TOKEN ****************************/
@@ -21,8 +21,7 @@ export const verifyJwtToken = asyncHandler(async (req, res, next) => {
       "-password -refreshToken"
     ); // check user exists in the database
     if (!user) throw new ApiError(401, "Inavlid Access token!");
-
-    res.user = user;
+    req.user = user;
     next();
   } catch (error) {
     throw new ApiError(401, error?.message || "Ivalid access token!");
