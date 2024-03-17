@@ -159,7 +159,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     userId,
     {
-      $set: { refreshToken: undefined },
+      $unset: { refreshToken: 1 },
     },
     { new: true }
   );
@@ -384,8 +384,12 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user._id);
 
-  if (user.password !== oldPassword)
-    throw new ApiError(400, "Invalid password!");
+  // Checking the current password
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid old password");
+  }
 
   user.password = newPassword;
   await user.save({ validateBeforeSave: false }); // To bypass the validation.
