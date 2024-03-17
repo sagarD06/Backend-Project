@@ -42,7 +42,7 @@ router.route("/login").post(loginUser);
 router.route("/current-user").get(verifyJwtToken, getCurrentUser);
 
 /***************************** GET CURRENT USER PROFILEVROUTE ****************************/
-router.route("/c:/username").get(verifyJwtToken, getCurrentUserChannelProfile);
+router.route("/c/:username").get(verifyJwtToken, getCurrentUserChannelProfile);
 
 /***************************** LOGOUT ROUTE ****************************/
 router.route("/logout").post(verifyJwtToken, logoutUser);
