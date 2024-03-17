@@ -4,6 +4,7 @@ import { ApiResponse } from "../utilities/ApiResponse.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utilities/cloudinary.js";
 import jwt from "jsonwebtoken";
+import { deleteImageFromCloudinary } from "../utilities/deleteImageFromCloudinary.js";
 
 /***************************** GLOBAL DECLERATION ****************************/
 
@@ -101,7 +102,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // sending the response back.
-  res
+  return res
     .status(201)
     .json(
       new ApiResponse(200, createdUser, "User  has been successfully created!")
@@ -132,7 +133,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const loggedInUser = await User.findById(user._id);
 
-  res
+  return res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
@@ -162,11 +163,107 @@ const logoutUser = asyncHandler(async (req, res) => {
     { new: true }
   );
 
-  res
+  return res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out successfully!"));
+});
+
+/***************************** GET CURRENT USER ****************************/
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User fetched successfully!"));
+});
+
+/***************************** UPDATE CURRENT USER ****************************/
+
+const updateCurrentUser = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!fullName || !email)
+    throw new ApiError(400, "Please provide full name and email!");
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { fullName, email },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Profile updated Successfully!"));
+});
+
+/***************************** UPDATE CURRENT USER AVATAR ****************************/
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const oldFileUrl = req.user?.coverImage;
+  const avatarLocalPath = req.file?.path;
+  if (!avatarLocalPath) new ApiError(400, "Avatar file is missing!");
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) throw new ApiError(400, "Error while uploading avatar!");
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  const isDeleted = deleteImageFromCloudinary(oldFileUrl);
+
+  if (!isDeleted)
+    throw new ApiError(
+      500,
+      "Something went wrong while deleting the previous image!"
+    );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar updated successfully!"));
+});
+
+/***************************** UPDATE CURRENT USER COVER IMAGE ****************************/
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const oldFileUrl = req.user?.coverImage;
+  const coverImageLocalPath = req.file?.path;
+  if (!coverImageLocalPath) new ApiError(400, "Cover image file is missing!");
+
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!coverImage.url)
+    throw new ApiError(400, "Error while uploading Cover Image!");
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  const isDeleted = deleteImageFromCloudinary(oldFileUrl);
+
+  if (!isDeleted)
+    throw new ApiError(500, "Could not delete the previous image!");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image updated successfully!"));
 });
 
 /***************************** REFRESH ACCESS TOKEN ****************************/
@@ -193,7 +290,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       user._id
     );
 
-    res
+    return res
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
@@ -209,4 +306,31 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+/***************************** RESET CURRENT PASSWORD ****************************/
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const user = await User.findById(req.user._id);
+
+  if (user.password !== oldPassword)
+    throw new ApiError(400, "Invalid password!");
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false }); // To bypass the validation.
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password successfully changed!"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateCurrentUser,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
