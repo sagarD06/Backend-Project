@@ -1,8 +1,8 @@
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Tweet } from "../models/tweet.models.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utilities/ApiErrors.js";
+import { ApiResponse } from "../utilities/ApiResponse.js";
+import { asyncHandler } from "../utilities/asyncHandler.js";
 
 const createTweet = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -26,10 +26,15 @@ const createTweet = asyncHandler(async (req, res) => {
 });
 
 const getUserTweets = asyncHandler(async (req, res) => {
-  const user = req.user;
-  if (!user) throw new ApiError(400, "Invalid Request, Please login!");
+  const { userId } = req.params;
+  if (!userId) throw new ApiError(400, "Invalid Request, Please login!");
 
   const tweets = await Tweet.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    },
     {
       $lookup: {
         from: "users",
@@ -70,7 +75,7 @@ const updateTweet = asyncHandler(async (req, res) => {
   const tweet = await Tweet.findById(tweetId);
   if (!tweet) throw new ApiError(404, "Tweet not Found!");
 
-  if (tweet.owner !== user._id)
+  if (tweet.owner.toString() !== user._id.toString())
     throw new ApiError(
       403,
       "You do not have permission to perform this action!"
@@ -92,7 +97,7 @@ const updateTweet = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, updateTweet, "Tweet has been Updated Successfully!")
+      new ApiResponse(200, updatedTweet, "Tweet has been Updated Successfully!")
     );
 });
 
@@ -106,7 +111,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
   const tweet = await Tweet.findById(tweetId);
   if (!tweet) throw new ApiError(404, "Tweet not Found!");
 
-  if (tweet.owner !== user._id)
+  if (tweet.owner.toString() !== user._id.toString())
     throw new ApiError(
       403,
       "You do not have permission to perform this action!"
@@ -120,7 +125,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Tweet deleted  successfully"));
+    .json(new ApiResponse(200, deletedTweet, "Tweet deleted  successfully"));
 });
 
 export { createTweet, getUserTweets, updateTweet, deleteTweet };
