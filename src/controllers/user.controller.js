@@ -4,7 +4,7 @@ import { ApiResponse } from "../utilities/ApiResponse.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utilities/cloudinary.js";
 import jwt from "jsonwebtoken";
-import { deleteImageFromCloudinary } from "../utilities/deleteImageFromCloudinary.js";
+import { deleteFileFromCloudinary } from "../utilities/cloudinary.js";
 import mongoose from "mongoose";
 
 /***************************** GLOBAL DECLERATION ****************************/
@@ -293,7 +293,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  const isDeleted = deleteImageFromCloudinary(oldFileUrl);
+  const isDeleted = deleteFileFromCloudinary(oldFileUrl);
 
   if (!isDeleted)
     throw new ApiError(
@@ -328,7 +328,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  const isDeleted = deleteImageFromCloudinary(oldFileUrl);
+  const isDeleted = deleteFileFromCloudinary(oldFileUrl);
 
   if (!isDeleted)
     throw new ApiError(500, "Could not delete the previous image!");

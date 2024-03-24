@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { ApiError } from "./ApiErrors.js";
 import fs from "fs";
 
 cloudinary.config({
@@ -22,4 +23,25 @@ const uploadOnCloudinary = async (localFileUrl) => {
   }
 };
 
-export { uploadOnCloudinary };
+const deleteFileFromCloudinary = async (fileUrl) => {
+  try {
+    if (!fileUrl) throw new ApiError(400, "File url is neccessary!");
+    const regex = /[\w\.\$]+(?=.png|.jpg|.gif|.mp4)/;
+    const publicIdArray = fileUrl.match(regex);
+
+    if (!publicIdArray)
+      throw new ApiError(500, "Something went wrong while fetching PublicId!");
+
+    const publicId = publicIdArray[0];
+
+    const response = await cloudinary.uploader.destroy(publicId);
+
+    if (!response) throw new ApiError(500, "Failed to delete the image");
+
+    return response;
+  } catch (error) {
+    return false;
+  }
+};
+
+export { uploadOnCloudinary, deleteFileFromCloudinary };

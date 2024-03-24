@@ -4,6 +4,8 @@ import { ApiError } from "../utilities/ApiErrors.js";
 import { ApiResponse } from "../utilities/ApiResponse.js";
 import { asyncHandler } from "../utilities/asyncHandler.js";
 
+/***************************** CREATE NEW TWEET ****************************/
+
 const createTweet = asyncHandler(async (req, res) => {
   const user = req.user;
   const { content } = req.body;
@@ -24,6 +26,8 @@ const createTweet = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, createdTweet, "Tweet created  successfully!"));
 });
+
+/***************************** GET ALL USERS TWEETS ****************************/
 
 const getUserTweets = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -63,6 +67,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, tweets, "Tweets fetched successfully!"));
 });
 
+/***************************** UPDATE TWEET ****************************/
+
 const updateTweet = asyncHandler(async (req, res) => {
   const user = req.user;
   const { tweetId } = req.params;
@@ -100,6 +106,8 @@ const updateTweet = asyncHandler(async (req, res) => {
       new ApiResponse(200, updatedTweet, "Tweet has been Updated Successfully!")
     );
 });
+
+/***************************** DELETE TWEET ****************************/
 
 const deleteTweet = asyncHandler(async (req, res) => {
   const user = req.user;
