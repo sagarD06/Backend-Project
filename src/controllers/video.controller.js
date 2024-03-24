@@ -181,17 +181,11 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid Video ID!");
 
-  let video = await Video.findByIdAndUpdate(
-    videoId,
-    {
-      $bit: { isPublished: { xor: 1 } },
-    },
-    {
-      new: true,
-    }
-  );
+  let video = await Video.findById(videoId);
+  if (!video) throw new ApiError(404, "Video not found");
 
-  if (!video) throw new ApiError(500, "could not update the bit!");
+  video.isPublished = !video.isPublished;
+  video = await video.save({ validateBeforeSave: false });
 
   return res
     .status(200)
