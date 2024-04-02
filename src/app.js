@@ -28,6 +28,7 @@ import likeRoute from "./routes/like.route.js";
 import subscriptionRoute from "./routes/subscription.route.js";
 import playlistRoute from "./routes/playlist.route.js";
 import healthCheckRoute from "./routes/healthcheck.route.js";
+import dashboardRoute from "./routes/dashboard.route.js";
 
 /***************************** ROUTES DECLERATIONS ****************************/
 
@@ -39,5 +40,6 @@ app.use("/api/v1/likes", likeRoute);
 app.use("/api/v1/subscriptions", subscriptionRoute);
 app.use("/api/v1/playlists", playlistRoute);
 app.use("/api/v1/healthcheck", healthCheckRoute);
+app.use("/api/v1/dashboard", dashboardRoute);
 
 export default app;
