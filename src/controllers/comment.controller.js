@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Comment } from "../models/comment.models.js";
 import { ApiError } from "../utilities/ApiErrors.js";
 import { ApiResponse } from "../utilities/ApiResponse.js";
@@ -7,9 +7,32 @@ import { asyncHandler } from "../utilities/asyncHandler.js";
 /***************************** GET ALL COMMENTS ****************************/
 
 const getVideoComments = asyncHandler(async (req, res) => {
-  //TODO: get all comments for a video
   const { videoId } = req.params;
   const { page = 1, limit = 10 } = req.query;
+  const user = req.user;
+  if (!user) throw new ApiError(401, "Invalid request, Please login!");
+
+  let pipeline = [];
+
+  if (videoId && isValidObjectId(videoId)) {
+    pipeline.push({ $match: { video: new mongoose.Types.ObjectId(videoId) } });
+  } else {
+    throw new ApiError(400, "Invalid video Id!");
+  }
+
+  pipeline.push({ $sort: { createdAt: -1 } });
+
+  let options = {
+    page: parseInt(page),
+    limit: parseInt(limit),
+  };
+
+  const comments = await Comment.aggregatePaginate(pipeline, options);
+  if (!comments) throw new ApiError(404, "no comments found!");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comments, "All comments fetched successfully!"));
 });
 
 /***************************** CREATE COMMENT ****************************/
